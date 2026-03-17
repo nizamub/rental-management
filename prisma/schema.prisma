@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      Role     @default(RENTER)
+  createdAt DateTime @default(now())
+  apartment Apartment?
+  bills     Bill[]
+}
+
+model Apartment {
+  id       String          @id @default(cuid())
+  name     String
+  floor    String?
+  size     String?
+  status   ApartmentStatus @default(VACANT)
+  renterId String?         @unique
+  renter   User?           @relation(fields: [renterId], references: [id])
+  bills    Bill[]
+  readings MeterReading[]
+}
+
+model Bill {
+  id           String     @id @default(cuid())
+  month        Int
+  year         Int
+  baseRent     Float
+  electricBill Float
+  gasBill      Float      @default(0)
+  waterBill    Float      @default(0)
+  otherCharges Json?
+  totalAmount  Float
+  status       BillStatus @default(UNPAID)
+  paidAt       DateTime?
+  createdAt    DateTime   @default(now())
+  apartmentId  String
+  apartment    Apartment  @relation(fields: [apartmentId], references: [id])
+  renterId     String
+  renter       User       @relation(fields: [renterId], references: [id])
+}
+
+model MeterReading {
+  id          String    @id @default(cuid())
+  month       Int
+  year        Int
+  prevUnit    Float
+  currUnit    Float
+  costPerUnit Float
+  apartmentId String
+  apartment   Apartment @relation(fields: [apartmentId], references: [id])
+  recordedAt  DateTime  @default(now())
+}
+
+model Settings {
+  id              String @id @default(cuid())
+  costPerUnit     Float  @default(8.0)
+  ownerName       String @default("Building Owner")
+  ownerPhone      String @default("")
+  ownerEmail      String @default("")
+  buildingName    String @default("Monowara Amin Mansion")
+  buildingAddress String @default("")
+}
+
+enum Role {
+  OWNER
+  RENTER
+}
+
+enum BillStatus {
+  UNPAID
+  PAID
+  PARTIAL
+}
+
+enum ApartmentStatus {
+  OCCUPIED
+  VACANT
+}
